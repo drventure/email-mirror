@@ -1,5 +1,6 @@
 /**
  * Created by debayan on 7/24/16.
+ * NOTE: This runs in the CLIENT BROWSER, not under node
  */
 
 Module.register("email",{
@@ -19,42 +20,66 @@ Module.register("email",{
     //     ]
     payload: [],
 
+    /**
+     * Kicks off the whole email checking process
+     */
     start : function(){
-        console.log("Email module started!");
-        console.log('MEMEME', this.config);
-        this.sendSocketNotification('LISTEN_EMAIL',{config: this.config, payload: this.payload, loaded: this.loaded});
+        Log.info("Starting module: " + this.name);
+
+        //send msg to the node backend to start checking for emails
+        this.sendSocketNotification('LISTEN_EMAIL', { config: this.config, payload: this.payload, loaded: this.loaded });
+        
+        Log.log('AfterSendSocket');
         this.loaded = false;
     },
 
-    socketNotificationReceived: function(notification, payload){
-        if (notification === 'EMAIL_RESPONSE'){
-            if(payload){
+
+    /**
+     * 
+     * @param {string} notification type of notification received
+     * @param {obj} payload the list of messages to display
+     */
+    socketNotificationReceived: function (notification, payload) {
+        var self = this;
+        Log.log('Got Notification: ' + notification);
+        if (notification === 'EMAIL_RESPONSE') {
+            if (payload) {
                 this.loaded = true;
-                var that = this;
-                console.log("NEW PAYLOAD: ", payload);
-                var payloadIds = that.payload.map(function(m) {return m.id});
+                Log.log("NEW PAYLOAD: ", payload);
+                var payloadIds = self.payload.map(function(m) {return m.id});
                 payload.forEach(function(m){
                     if(payloadIds.indexOf(m.id) == -1)
-                        that.payload.push(m);
+                        self.payload.push(m);
                 });
 
-                this.payload.sort(function(a,b) {return b.id - a.id; });
+                //basically, sorts emails by descending received date
+                //this.payload.sort(function(a,b) {return b.id - a.id; });
+                //sort by desc date across all accounts instead
+                self.payload.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
 
-                this.sendSocketNotification('LISTEN_EMAIL',{config: this.config, payload: this.payload, loaded: this.loaded});
-                this.updateDom(2000);
+                //refresh the UI
+                self.updateDom(2000);
             }
         }
     },
 
+    
     // Define required scripts.
     getStyles: function() {
         return ["email.css", "font-awesome.css"];
     },
 
+
+	// Return the scripts that are necessary for the email module.
+	getScripts: function () {
+		return ["notifier.js"];
+    },
+    
+    
     getDom: function(){
         var wrapper = document.createElement("table");
         wrapper.className = "small";
-        var that =this;
+        var that = this;
         if(this.payload.length > 0)
         {
             if (typeof that.config.accounts !== "undefined") {
@@ -77,6 +102,7 @@ Module.register("email",{
                     }
                 }
 
+                var count = 0
                 this.payload.forEach(function (mailObj) {
 
                     var host = mailObj.host.slice(0,1) + '@' + mailObj.host.substr(mailObj.host.indexOf('@') + 1)[0];
@@ -121,12 +147,14 @@ Module.register("email",{
                     // Create fade effect.
                     if (that.config.fade) {
                         var startingPoint = that.payload.slice(0, totalEmails).length * 0.25;
+                        //Fix fade effect courtesy Alex via MM Forums
                         var steps = that.payload.slice(0, that.config.numberOfEmails).length - startingPoint;
                         if (count >= startingPoint) {
                             var currentStep = count - startingPoint;
                             emailWrapper.style.opacity = 1 - (1 / steps * currentStep);
                         }
                     }
+                    count++;
                 });
 
             }

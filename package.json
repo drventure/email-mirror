@@ -1,6 +1,7 @@
 {
   "name": "email",
   "description": "Widget that notifies mirror on new incoming email.",
+  "main": "email.js",
   "keywords": [
     "email",
     "mirror",
