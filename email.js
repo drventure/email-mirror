@@ -46,10 +46,16 @@ Module.register("email",{
             if (payload) {
                 this.loaded = true;
                 Log.log("NEW PAYLOAD: ", payload);
-                var payloadIds = self.payload.map(function(m) {return m.id});
-                payload.forEach(function(m){
-                    if(payloadIds.indexOf(m.id) == -1)
-                        self.payload.push(m);
+                //get list of email ids that we've already got
+                var payloadIds = self.payload.map(function (m) { return m.id });
+                //find any new emails that aren't already in the list and add them
+                payload.forEach(function (m) {
+                    //make sure the payload entry actually contains something
+                    if (m) {
+                        //if we haven't got it, add it to the local payload of emails
+                        if(payloadIds.indexOf(m.id) == -1)
+                            self.payload.push(m);
+                    }
                 });
 
                 //basically, sorts emails by descending received date
@@ -72,7 +78,7 @@ Module.register("email",{
 
 	// Return the scripts that are necessary for the email module.
 	getScripts: function () {
-		return ["notifier.js"];
+        return ["notifier.js"];
     },
     
     
@@ -84,24 +90,29 @@ Module.register("email",{
         {
             if (typeof that.config.accounts !== "undefined") {
                 var indexToRemove = [];
+                //for each email account we're tracking...
                 for (var i = 0; i < this.config.accounts.length; i++) {
                     var maxNumEmails = this.config.accounts[i].numberOfEmails;
+                    //count up the emails we have for this account
                     var count = 0;
                     for (var j = 0; j < this.payload.length; j++) {
                         if (this.payload[j].host === this.config.accounts[i].user) {
                             count++;
                         }
+                        //too many, mark this one to remove
                         if (count > maxNumEmails) {
                             indexToRemove.push(j);
                         }
                     }
                 }
+                //go back through and removed the marked items
                 for (var j = 0; j < this.payload.length; j++) {
                     if (indexToRemove.indexOf(j) > -1) {
                         delete this.payload[j];
                     }
                 }
 
+                //finally, populate the DOM with the emails that remain in the list
                 var count = 0
                 this.payload.forEach(function (mailObj) {
 
@@ -110,7 +121,7 @@ Module.register("email",{
                     var name = mailObj.sender[0].name.replace(/['"]+/g, "");
                     name = name.substring(0, that.config.maxCharacters);
 
-                    var subject = mailObj.subject.replace(/[\['"\]]+/g, "");
+                    var subject = (mailObj.subject ?? "(no subject)").replace(/[\['"\]]+/g, "");
                     subject = subject.substring(0, that.config.maxCharacters);
 
                     var emailWrapper = document.createElement("tr");
@@ -123,6 +134,7 @@ Module.register("email",{
                     nameWrapper.className = "bright";
                     nameWrapper.setAttribute("data-letters", host);
                     nameWrapper.innerHTML = name;
+                    nameWrapper.style.color = mailObj.color;
                     senderWrapper.appendChild(nameWrapper);
                     var addressWrapper = document.createElement("td");
                     addressWrapper.className = "address xsmall thin dimmed";
@@ -136,7 +148,6 @@ Module.register("email",{
                     emailWrapper.appendChild(subjectWrapper);
 
                     wrapper.appendChild(emailWrapper);
-
 
                     // Calculate total possible emails
                     var totalEmails = 0;

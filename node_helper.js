@@ -81,7 +81,8 @@ module.exports = NodeHelper.create({
                     subject: b,
                     date: d,
                     id: s,
-                    host: m.to[0].address
+                    host: m.to[0].address,
+                    color: accounts[accountIndex].color ?? "white"
                 };
                 //add this message to the payload we'll return to client
                 final.push(tmp);

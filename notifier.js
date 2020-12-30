@@ -1,5 +1,5 @@
 /*jslint node: true, vars: true, indent: 4 */
-'use strict'
+"use strict"
 
 var util = require('util'),
     Imap = require('imap'),
