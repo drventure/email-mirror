@@ -96,7 +96,7 @@ Module.register("email",{
                     //count up the emails we have for this account
                     var count = 0;
                     for (var j = 0; j < this.payload.length; j++) {
-                        if (this.payload[j].host === this.config.accounts[i].user) {
+                        if (this.payload[j].host === this.config.accounts[i].host) {
                             count++;
                         }
                         //too many, mark this one to remove
